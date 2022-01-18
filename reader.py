@@ -47,6 +47,7 @@ class ReaderThread (Thread):
         self.setDaemon(1)
         self.recvQueue = ThreadQueue()
         self.foundLabels = False
+        self.gotStart = False
 
     def run(self):
         self.port = serial.Serial('/dev/cu.usbmodem14503', baudrate=57600)
@@ -65,10 +66,12 @@ class ReaderThread (Thread):
                     self.recvQueue.put(channelList)
                     channelList=[]
                 elif s=='****':
-                    pass
+                    if not self.gotStart:
+                        self.gotStart = True
+                        print("Starting!")
                 else:
                     try:
-                        if s:
+                        if self.gotStart and s:
                             row = eval(s)
                             if len(row)==6:
                                 #print("Got row:", row)

@@ -108,9 +108,15 @@ class CanvasFrame(wx.Frame):
         
     def OnSave(self, evt):
         self.lock.acquire()
-        resultFile = open('Unknown_Data.py', 'w')
-        resultFile.write(str(self.data))
-        resultFile.close()
+
+        fdlg = wx.FileDialog(self, "Save File", "", "", "PY files(*.py)|*.*",  wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+
+        if fdlg.ShowModal() == wx.ID_OK:
+            self.save_path = fdlg.GetPath() + ".py"
+
+            with open(self.save_path, "w") as file:
+                file.write("data = " + str(self.data))
+
         self.lock.release()
         
     def ontimer(self, evt):
