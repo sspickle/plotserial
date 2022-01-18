@@ -1,0 +1,3 @@
+# Start working on a general serial plotter.
+
+Baby steps...
