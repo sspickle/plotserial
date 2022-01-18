@@ -25,6 +25,10 @@ vMax = 6*1.024
 rBase =22e3
 rColl = 220
 
+ICVSIB = 0
+ICVSVC = 1
+ICVSIB_Label = "Ic vs Ib"
+ICVSVC_Label = "Ic vs Vc"
 
 def getVals(k, frame):
     d = np.array(frame.data[k])
@@ -46,7 +50,7 @@ class CanvasFrame(wx.Frame):
         super().__init__(None, -1, 'CanvasFrame', size=(550, 350))
         
         self.paused = False
-
+        self.plotType = ICVSVC
         self.lock = RLock()
         self.data = {}
 
@@ -65,15 +69,18 @@ class CanvasFrame(wx.Frame):
         self.clearButton = wx.Button(self, label="Clear")
         self.saveButton = wx.Button(self, label="Save Data")
         self.pauseButton = wx.Button(self, label="Pause")
+        self.plotTypeButton = wx.Button(self, label=ICVSIB_Label)
         self.hbox.Add(self.clearButton, 0)
         self.hbox.Add(self.saveButton, 20)
         self.hbox.Add(self.pauseButton, 20)
+        self.hbox.Add(self.plotTypeButton, 20)
 
         self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
 
         self.clearButton.Bind(wx.EVT_BUTTON, self.OnClear)
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
+        self.plotTypeButton.Bind(wx.EVT_BUTTON, self.OnTogglePlotType)
 
         self.add_toolbar()  # comment this out for no toolbar
         self.update_plot()
@@ -105,6 +112,14 @@ class CanvasFrame(wx.Frame):
             self.pauseButton.SetLabel("Resume")
         else:
             self.pauseButton.SetLabel("Pause")
+            
+    def OnTogglePlotType(self, evt):
+        if self.plotType == ICVSIB:
+            self.plotType = ICVSVC
+            self.plotTypeButton.SetLabel(ICVSIB_Label)
+        else:
+            self.plotType = ICVSIB
+            self.plotTypeButton.SetLabel(ICVSVC_Label)
         
     def OnSave(self, evt):
         self.lock.acquire()
@@ -129,8 +144,8 @@ class CanvasFrame(wx.Frame):
         key = items[0][0][0]
         self.data[key] = items[0]
         self.lock.release()
-        
-    def update_plot(self):
+
+    def plot_icvsvc(self):
         if not self.paused:
             self.lock.acquire()
             self.axes.clear()
@@ -144,6 +159,27 @@ class CanvasFrame(wx.Frame):
             self.axes.set_xlabel('Vc (V)')
             self.axes.set_ylabel('Ic (mA)')
             self.lock.release()
+
+    def plot_icvsib(self):
+        if not self.paused:
+            self.lock.acquire()
+            self.axes.clear()
+            #self.axes.plot(range(100),range(100), 'b-')
+            for k in sorted(list(self.data.keys())):
+                currObjs = calcCurrents(k,self)
+                ibMean = currObjs['iBase'].mean()
+                self.axes.plot(currObjs['iBase']*1e6, 1000*currObjs['iColl'],label="$I_{b}$ = %.1f $\mu$A" % (ibMean*1e6))
+            self.axes.grid()
+            self.axes.legend()
+            self.axes.set_xlabel('Ib (uA)')
+            self.axes.set_ylabel('Ic (mA)')
+            self.lock.release()
+
+    def update_plot(self):
+        if self.plotType == ICVSVC:
+            self.plot_icvsvc()
+        else:
+            self.plot_icvsib()
 
     def OnPaint(self, event):
         self.update_plot()
