@@ -50,7 +50,7 @@ class ReaderThread (Thread):
         self.gotStart = False
 
     def run(self):
-        self.port = serial.Serial('/dev/cu.usbmodem14503', baudrate=57600)
+        self.port = serial.Serial('/dev/cu.usbmodem83403', baudrate=57600)
 
         while 1:
             channelList = []
