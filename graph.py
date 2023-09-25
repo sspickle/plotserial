@@ -20,37 +20,11 @@ from reader import MonitorThread
 
 import wx
 
-vRawMax = 4096
-vMax = 6*1.024
-rBase =22e3
-rColl = 220
-
-ICVSIB = 0
-ICVSVC = 1
-ICVSIB_Label = "Ic vs Ib"
-ICVSVC_Label = "Ic vs Vc"
-
-def getVals(k, frame):
-    d = np.array(frame.data[k])
-    bd,cd,bp,bm,cm,cp = d[:,0],d[:,1],d[:,2],d[:,3],d[:,4],d[:,5]
-    return {'bd': bd, 'cd': cd, 'bp': bp, 'bm': bm, 'cp': cp, 'cm': cm}
-
-def calcCurrents(k, frame):
-    vals = getVals(k, frame)
-    dvBase = vMax*(vals['bp'] - vals['bm'])/vRawMax
-    iBase = dvBase/rBase
-    vcd = vMax*vals['cp']/vRawMax
-    vc = vMax*vals['cm']/vRawMax
-    dvColl = vcd - vc
-    iColl = dvColl/rColl
-    return {'iBase': iBase, 'iColl': iColl, 'vc':vc}
-
 class CanvasFrame(wx.Frame):
     def __init__(self):
         super().__init__(None, -1, 'CanvasFrame', size=(550, 350))
         
         self.paused = False
-        self.plotType = ICVSVC
         self.lock = RLock()
         self.data = {}
 
@@ -69,18 +43,15 @@ class CanvasFrame(wx.Frame):
         self.clearButton = wx.Button(self, label="Clear")
         self.saveButton = wx.Button(self, label="Save Data")
         self.pauseButton = wx.Button(self, label="Pause")
-        self.plotTypeButton = wx.Button(self, label=ICVSIB_Label)
         self.hbox.Add(self.clearButton, 0)
         self.hbox.Add(self.saveButton, 20)
         self.hbox.Add(self.pauseButton, 20)
-        self.hbox.Add(self.plotTypeButton, 20)
 
         self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
 
         self.clearButton.Bind(wx.EVT_BUTTON, self.OnClear)
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
-        self.plotTypeButton.Bind(wx.EVT_BUTTON, self.OnTogglePlotType)
 
         self.add_toolbar()  # comment this out for no toolbar
         self.update_plot()
@@ -138,48 +109,24 @@ class CanvasFrame(wx.Frame):
         self.update_plot()
         self.canvas.draw()
         
-        
     def dataCallback(self, items):
         self.lock.acquire()
-        key = items[0][0][0]
-        self.data[key] = items[0]
+        key = 'data'
+        self.data[key] = self.data.get(key,[]) + items
         self.lock.release()
 
-    def plot_icvsvc(self):
+    def plot_data(self):
         if not self.paused:
             self.lock.acquire()
             self.axes.clear()
-            #self.axes.plot(range(100),range(100), 'b-')
             for k in sorted(list(self.data.keys())):
-                currObjs = calcCurrents(k,self)
-                ibMean = currObjs['iBase'].mean()
-                self.axes.plot(currObjs['vc'], 1000*currObjs['iColl'],label="$I_{b}$ = %.1f $\mu$A" % (ibMean*1e6))
+                self.axes.plot(range(len(self.data[k])), self.data[k],label="data")
             self.axes.grid()
             self.axes.legend()
-            self.axes.set_xlabel('Vc (V)')
-            self.axes.set_ylabel('Ic (mA)')
-            self.lock.release()
-
-    def plot_icvsib(self):
-        if not self.paused:
-            self.lock.acquire()
-            self.axes.clear()
-            #self.axes.plot(range(100),range(100), 'b-')
-            for k in sorted(list(self.data.keys())):
-                currObjs = calcCurrents(k,self)
-                ibMean = currObjs['iBase'].mean()
-                self.axes.plot(currObjs['iBase']*1e6, 1000*currObjs['iColl'],label="$I_{b}$ = %.1f $\mu$A" % (ibMean*1e6))
-            self.axes.grid()
-            self.axes.legend()
-            self.axes.set_xlabel('Ib (uA)')
-            self.axes.set_ylabel('Ic (mA)')
             self.lock.release()
 
     def update_plot(self):
-        if self.plotType == ICVSVC:
-            self.plot_icvsvc()
-        else:
-            self.plot_icvsib()
+        self.plot_data()
 
     def OnPaint(self, event):
         self.update_plot()

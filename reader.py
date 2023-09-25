@@ -50,10 +50,9 @@ class ReaderThread (Thread):
         self.gotStart = False
 
     def run(self):
-        self.port = serial.Serial('/dev/cu.usbmodem83403', baudrate=57600)
+        self.port = serial.Serial('/dev/cu.usbserial-8340', baudrate=9600)
 
         while 1:
-            channelList = []
             while 1:
                 s = ''
                 try:
@@ -62,22 +61,11 @@ class ReaderThread (Thread):
                 except UnicodeDecodeError:
                     print("Ack decode error:", inval)
 
-                if s=='####':
-                    self.recvQueue.put(channelList)
-                    channelList=[]
-                elif s=='****':
-                    if not self.gotStart:
-                        self.gotStart = True
-                        print("Starting!")
-                else:
-                    try:
-                        if self.gotStart and s:
-                            row = eval(s)
-                            if len(row)==6:
-                                #print("Got row:", row)
-                                channelList.append(row)
-                    except (ValueError, SyntaxError, NameError) as e:
-                        print ("Ack. conversion error:" + str(s), channelList, "keep trying...")
+                try:
+                    val = eval(s)
+                    self.recvQueue.put(val)
+                except (ValueError, SyntaxError, NameError) as e:
+                    print ("Ack. conversion error:" + str(s), "keep trying...")
 
     def get(self):
         return self.recvQueue.get()
