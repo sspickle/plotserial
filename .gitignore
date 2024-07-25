@@ -4,4 +4,6 @@ __pycache__
 .venv
 *.csv
 data.py
-
+/build
+/dist
+.DS_*

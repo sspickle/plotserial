@@ -10,7 +10,7 @@ import traceback
 import getopt
 import traceback
 import serial
-
+DELAY_TIME = 0.01
 
 def log(msg):
     sys.stdout.write('LOG ' + time.ctime(time.time()) + ":" + msg + '\n')
@@ -36,8 +36,8 @@ class ThreadQueue:
             item = self.queue[0]
             del self.queue[0]
             self.mon.release()
-            
         return item
+
         
         
 class ReaderThread (Thread):
@@ -48,24 +48,58 @@ class ReaderThread (Thread):
         self.recvQueue = ThreadQueue()
         self.foundLabels = False
         self.gotStart = False
+        self.port = None 
+        self.portLock = RLock()
+        self.paused = False
+
+    def resetStartTime(self):
+        self.portLock.acquire()
+        self.starttime = time.time()
+        self.portLock.release()
+
+    def emptyQ(self):
+        while 1:
+            item = self.recvQueue.get()
+            if not item:
+                 break
 
     def run(self):
-        self.port = serial.Serial('/dev/cu.usbserial-8340', baudrate=9600)
-
         while 1:
-            while 1:
-                s = ''
+            s = ''
+            self.portLock.acquire()
+            if self.port:
                 try:
                     inval = self.port.readline()
-                    s = inval.decode().strip()           # read a line of input from the Arduino
+                    s = inval.decode().strip()# read a line of input from the Arduino
+                    
                 except UnicodeDecodeError:
                     print("Ack decode error:", inval)
 
                 try:
                     val = eval(s)
-                    self.recvQueue.put(val)
+                    # t = time.time() - self.starttime
+                    t = time.time()
+                    self.recvQueue.put((val,t))
                 except (ValueError, SyntaxError, NameError) as e:
                     print ("Ack. conversion error:" + str(s), "keep trying...")
+            else:
+                time.sleep(DELAY_TIME)
+            self.portLock.release()
+            time.sleep(DELAY_TIME)
+
+    def closeifopen(self):
+        if self.port != None:
+            self.port.close()
+            self.port = None
+            print("port closed")
+
+    def openport(self, portname):
+        self.portLock.acquire()
+        self.closeifopen()
+        print("in readerThread openport id", portname)
+        self.port = serial.Serial(portname, baudrate=9600)
+        self.resetStartTime()
+        self.portLock.release()
 
     def get(self):
         return self.recvQueue.get()
@@ -75,6 +109,8 @@ class ReaderThread (Thread):
         Send typed message to port
         """
         self.port.write(msg.encode())
+
+
         
 class SenderThread(Thread):
     
@@ -86,10 +122,16 @@ class SenderThread(Thread):
 
     def put(self, item):
         self.queue.put(item)
+
+    def emptyQ(self):
+        while 1:
+            item = self.queue.get()
+            if not item:
+                 break
         
     def run(self):
         while 1:
-            time.sleep(0.1)
+            time.sleep(DELAY_TIME)
             items = []
 
             while 1:
@@ -105,13 +147,15 @@ class SenderThread(Thread):
 
 class MonitorThread(Thread):
 
-    def __init__(self, callback=None, fr=None):
+    def __init__(self, callback=None, fr=None, port='COM3:'):
         Thread.__init__(self, name="Monitor")
         self.setDaemon(1)
         self.callback = callback
         self.reader = None
         self.sender = None
+        self.port = port
         self.fr = fr
+        
         log("Monitor thread inited with callback=" + str(callback))
         
     def run(self):
@@ -119,6 +163,9 @@ class MonitorThread(Thread):
         self.reader = ReaderThread()
         self.sender = SenderThread(callback=self.callback)
         
+        # if self.port == True:
+        #     self.port.close()
+        #     print("port closed")
         #
         # start the threads.
         #
@@ -127,7 +174,7 @@ class MonitorThread(Thread):
         self.sender.start()
         
         while 1:
-            time.sleep(0.1)
+            time.sleep(DELAY_TIME)
             while 1:
                 qItem = self.reader.get()
                 if qItem:
@@ -141,9 +188,17 @@ class MonitorThread(Thread):
         if self.reader:
             self.reader.kill_pipe()
             del self.reader
-            
         if self.sender:
             del self.sender
+
+    def openport(self, id):
+        print("in monThread with id", id)
+        self.reader.openport(id)
+
+    def resetTime(self):
+        if self.reader:
+            self.reader.resetStartTime()
+    
         
 
 def monitorPort(test=0):
@@ -152,7 +207,7 @@ def monitorPort(test=0):
     monitor.start()
     
     while 1:
-        time.sleep(0.1) # sit around and wait for things to happen.
+        time.sleep(DELAY_TIME) # sit around and wait for things to happen.
         
 def testCallback( item ):
     print ("in callback")
