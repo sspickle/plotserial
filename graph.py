@@ -77,6 +77,7 @@ class CountdownPanel(wx.Panel):
         
     def HidePanel(self):
         self.Hide()
+
 def GetGitTag():
     # tag =  subprocess.check_output(['git', 'describe', '--tags'])
     tag = '1.1.2'
@@ -309,14 +310,6 @@ class CanvasFrame(wx.Frame):
             self.lock.release()
         if id == wx.ID_NEW: 
             self.text.AppendText("new"+"\n")
-
-    # def data_collect(self, id):
-    #     if not self.mon:   
-    #         self.mon = MonitorThread(callback=self.dataCallback)
-    #         self.mon.start()
-    #         self.update_plot()
-    #     else:
-    #         exit
         
     def add_toolbar(self):
         self.toolbar = NavigationToolbar(self.canvas)
@@ -483,9 +476,9 @@ class CanvasFrame(wx.Frame):
             self.lock.acquire()
             self.axes.clear()
             self.axes.plot(self.data['times'], self.data['values'],label="Force")
-            self.axes.set_ylim([250,600])
+            #self.axes.set_ylim([250,600])
             self.axes.grid()
-            self.axes.set_title(r"Pressure Graph")
+            #self.axes.set_title(r"Pressure Graph")
             self.lock.release()
             self.t1.Disable()
             self.stop_plot()
