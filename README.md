@@ -1,3 +1,5 @@
 # Start working on a general serial plotter.
 
-Baby steps...
+The idea here is to plot data pouring in from a serial port.
+
+
