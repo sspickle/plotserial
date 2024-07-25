@@ -123,7 +123,7 @@ class CanvasFrame(wx.Frame):
         self.hbox.Add(self.progressBar, 0, wx.ALL, 5)
 
         self.CreateStatusBar()
-        self.SetStatusText("Ready")
+        self.SetStatusText("Please choose a port")
         self.paused = False
         self.lock = RLock()
         self.lock.acquire()
@@ -163,8 +163,6 @@ class CanvasFrame(wx.Frame):
         self.SetSizer(self.sizer)
         self.Fit()
 
-           
-        
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         lblList = ['Manual', 'Threshold', 'Timer'] 
@@ -179,18 +177,17 @@ class CanvasFrame(wx.Frame):
         self.saveButton = wx.Button(self, label="Save Data")
         self.pauseButton = wx.Button(self, label="Start")
 
-        # self.hbox.Add(self.rb1, 0)
-        # self.hbox.Add(self.rb2, 0)
-        # self.hbox.Add(self.rb3, 20)
-
-        self.hbox.Add(self. rbox, 10)
-
+        self.hbox.Add(self.rbox, 10)
         self.hbox.Add(self.l1, 10)
         self.hbox.Add(self.t1, 30)
 
         self.hbox.Add(self.clearButton, 20)
         self.hbox.Add(self.saveButton, 20)
         self.hbox.Add(self.pauseButton, 20)
+
+        self.pauseButton.Disable()
+        self.saveButton.Disable()
+        self.clearButton.Disable()
 
         self.axes.grid()
         self.axes.set_ylim([250,600])
@@ -258,8 +255,8 @@ class CanvasFrame(wx.Frame):
         menubar.Append(fileMenu, '&Change Port') 
 
         version = GetGitTag()
-        info = "Team Data (ENGR 298) - Pressure Plotter"
-        names = "Rainey Biggerstaff, Bryson Walker, Param Dhaliwal, Rakan Abu Shanab, Avery Eller"
+        info = "UIndy Team Data (ENGR 298) - Plotter"
+        names = "Rainey Biggerstaff, Bryson Walker, Param Dhaliwal, Rakan Abu Shanab, Avery Eller, Steve Spicklemire"
         aboutMenu = wx.Menu()
         menubar.Append(aboutMenu, 'About')
 
@@ -301,6 +298,10 @@ class CanvasFrame(wx.Frame):
         id = event.GetId() 
         print(id)
         if id in portInfo:
+            self.pauseButton.Enable()
+            self.saveButton.Enable()
+            self.clearButton.Enable()
+
             if platform == "darwin":
                 self.open_port(portInfo[id])
             elif platform == "win32":
@@ -308,8 +309,8 @@ class CanvasFrame(wx.Frame):
             self.lock.acquire()
             self.data = {}
             self.lock.release()
-        if id == wx.ID_NEW: 
-            self.text.AppendText("new"+"\n")
+        if id == wx.ID_EXIT:
+            self.Close()
         
     def add_toolbar(self):
         self.toolbar = NavigationToolbar(self.canvas)
@@ -402,7 +403,7 @@ class CanvasFrame(wx.Frame):
     def thresholdCalculation(self, items):
         if not self.paused:     
             if self.mode == self.threshMode:
-                print(self.thresholdSum)
+                #print(self.thresholdSum)
                 for val,t in items:
                     dt = t-self.tLast - self.startTime
                     vavg = ((val-250)+self.vLast)/2
@@ -410,9 +411,10 @@ class CanvasFrame(wx.Frame):
                     self.vLast = val-250
                     self.tLast = t - self.startTime
                 if (self.thresholdSum >= self.value):
-                    print(self.thresholdSum)
-                    print(self.value)
-                    print("reset threshold")
+                    pass
+                    #print(self.thresholdSum)
+                    #print(self.value)
+                    #print("reset threshold")
                     # self.resetThreshold()
                     # self.paused = True
 
@@ -429,7 +431,7 @@ class CanvasFrame(wx.Frame):
             self.OnClear(evt)
             if(self.paused == False):
                 self.OnPause(evt)
-            print("radioTime")
+            #print("radioTime")
 
         if(self.rbox.GetStringSelection() == "Threshold"):
             #Timer UI
@@ -441,7 +443,7 @@ class CanvasFrame(wx.Frame):
             self.OnClear(evt)
             if(self.paused == False):
                 self.OnPause(evt)
-            print("radioThresh")
+            #print("radioThresh")
  
         if(self.rbox.GetStringSelection() == "Manual"):
             #Manual UI
@@ -460,13 +462,13 @@ class CanvasFrame(wx.Frame):
         for val,t in items:
             if self.paused:
                 self.startTime = t - self.displayTime
-                print("in dataCallBack Paused")
+                #print("in dataCallBack Paused")
             else:
                 self.displayTime = t - self.startTime
                 self.data['values'] = self.data.get('values',[])+[val]
                 self.data['times'] = self.data.get('times',[])+[self.displayTime] 
                 if not self.printed:
-                    print(t)  
+                    #print(t)  
                     self.printed = True   
         self.lock.release()
         self.thresholdCalculation(items)
@@ -495,7 +497,7 @@ class CanvasFrame(wx.Frame):
                 self.progressBar.Show()
                 elapsed_thresh = self.thresholdSum - 1 
                 progress = (elapsed_thresh / self.value) * 100
-                print(progress)
+                #print(progress)
                 self.progressBar.SetValue(min(int(progress), 100))
                 self.progressBar.SetColor(wx.Colour(0, 255, 0))
 
@@ -520,7 +522,7 @@ class CanvasFrame(wx.Frame):
     
 
     def stop_plot(self):
-        print(int(time.time()))
+        #print(int(time.time()))
         if((self.mode == self.timerMode) and int(time.time() - self.startTime) >= self.value):
             self.paused = True
 
@@ -540,8 +542,11 @@ class CanvasFrame(wx.Frame):
             dlg.Destroy()
         return int(result)     
     
-    def OnKeyTyped(self, event): 
-        self.value = int(event.GetString())
+    def OnKeyTyped(self, event):
+        try:
+            self.value = int(event.GetString())
+        except ValueError:
+            print("Invalid input")
 
 class MyApp(wx.App):
     def setPort(self, port='COM3:'):
