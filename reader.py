@@ -69,17 +69,20 @@ class ReaderThread (Thread):
             self.portLock.acquire()
             if self.port:
                 try:
+                    #print('reading input...')
                     inval = self.port.readline()
-                    s = inval.decode().strip()# read a line of input from the Arduino
+                    s = inval.decode().strip()
+                    #print("got input:", s)
                     
                 except UnicodeDecodeError:
                     print("Ack decode error:", inval)
 
                 try:
-                    val = eval(s)
+                    val,num = eval(s)
                     # t = time.time() - self.starttime
                     t = time.time()
-                    self.recvQueue.put((val,t))
+                    print(val, num, val/num, t)
+                    self.recvQueue.put((val/num,t))
                 except (ValueError, SyntaxError, NameError) as e:
                     print ("Ack. conversion error:" + str(s), "keep trying...")
             else:
@@ -97,7 +100,7 @@ class ReaderThread (Thread):
         self.portLock.acquire()
         self.closeifopen()
         print("in readerThread openport id", portname)
-        self.port = serial.Serial(portname, baudrate=9600)
+        self.port = serial.Serial(portname, baudrate=57600)
         self.resetStartTime()
         self.portLock.release()
 
