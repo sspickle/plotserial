@@ -165,21 +165,19 @@ class CanvasFrame(wx.Frame):
 
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        lblList = ['Manual', 'Threshold', 'Timer'] 
-		  
-        self.rbox = wx.RadioBox(self, label = 'Mode', pos = (0,0), choices = lblList,
-         majorDimension = 3, style = wx.RA_SPECIFY_ROWS) 
+        #lblList = ['Manual', 'Threshold', 'Timer'] 
+        #self.rbox = wx.RadioBox(self, label = 'Mode', pos = (0,0), choices = lblList, majorDimension = 3, style = wx.RA_SPECIFY_ROWS) 
 
-        self.l1 = wx.StaticText(self, -1, " Input")
-        self.t1 = wx.TextCtrl(self) 
+        #self.l1 = wx.StaticText(self, -1, " Input")
+        #self.t1 = wx.TextCtrl(self) 
         
         self.clearButton = wx.Button(self, label="Restart")
         self.saveButton = wx.Button(self, label="Save Data")
         self.pauseButton = wx.Button(self, label="Start")
 
-        self.hbox.Add(self.rbox, 10)
-        self.hbox.Add(self.l1, 10)
-        self.hbox.Add(self.t1, 30)
+        #self.hbox.Add(self.rbox, 10)
+        #self.hbox.Add(self.l1, 10)
+        #self.hbox.Add(self.t1, 30)
 
         self.hbox.Add(self.clearButton, 20)
         self.hbox.Add(self.saveButton, 20)
@@ -197,9 +195,8 @@ class CanvasFrame(wx.Frame):
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
 
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
-
-        self.rbox.Bind(wx.EVT_RADIOBOX,self.onRadioBox) 
+        #self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        #self.rbox.Bind(wx.EVT_RADIOBOX,self.onRadioBox) 
 
         self.add_toolbar()  # comment this out for no toolbar
         self.add_menu()
@@ -352,13 +349,13 @@ class CanvasFrame(wx.Frame):
             self.update_status("paused")
         else:
             self.pauseButton.SetLabel("Stop")
-            self.countdown = CountdownPanel(self)
-            self.sizer.Add(self.countdown,1,wx.EXPAND)
+            #self.countdown = CountdownPanel(self)
+            #self.sizer.Add(self.countdown,1,wx.EXPAND)
             self.lock.acquire()
             self.mon.sender.emptyQ()
             self.mon.reader.emptyQ()
             self.lock.release()
-            self.countdown.start_countdown(3)
+            #self.countdown.start_countdown(3)
                 
             
             self.paused = not self.paused
@@ -369,8 +366,6 @@ class CanvasFrame(wx.Frame):
                 self.OnClear(evt)   
             self.pauseButton.SetLabel("Stop") 
             self.update_status("collecting data...")
-
-            
             
     def OnTogglePlotType(self, evt):
         if self.plotType == ICVSIB:
@@ -482,7 +477,7 @@ class CanvasFrame(wx.Frame):
             self.axes.grid()
             #self.axes.set_title(r"Pressure Graph")
             self.lock.release()
-            self.t1.Disable()
+            #self.t1.Disable()
             self.stop_plot()
 
             if self.mon and (self.mode == self.timerMode) and self.value > 0:
@@ -509,18 +504,17 @@ class CanvasFrame(wx.Frame):
                 self.paused = True
 
         
-        if self.paused:  
-            self.t1.Enable()
+        #if self.paused:  
+        #    self.t1.Enable()
             
-        if self.paused:
-            if self.progressBar.progress >= 100:
-                self.progressBar.Show()
-                self.progressBar.SetColor(wx.Colour(0, 0, 255))
+        #if self.paused:
+        #    if self.progressBar.progress >= 100:
+        #        self.progressBar.Show()
+        #        self.progressBar.SetColor(wx.Colour(0, 0, 255))
 
         # if self.progressBar.progress >= 100:
         #     self.progressBar.SetColor(wx.Colour(0, 0, 255))
     
-
     def stop_plot(self):
         #print(int(time.time()))
         if((self.mode == self.timerMode) and int(time.time() - self.startTime) >= self.value):
