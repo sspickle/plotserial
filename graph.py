@@ -152,11 +152,11 @@ class CanvasFrame(wx.Frame):
         self.figure = Figure()
         self.axes = self.figure.add_subplot()
         self.canvas = FigureCanvas(self, -1, self.figure)
-
+        self.canvas.callbacks.connect('button_press_event', self.on_click)
+       	
         self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
         self.SetSizer(self.sizer)
         self.Fit()
-
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.EXPAND)
@@ -195,12 +195,8 @@ class CanvasFrame(wx.Frame):
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
 
-        #self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
-        #self.rbox.Bind(wx.EVT_RADIOBOX,self.onRadioBox) 
-
         self.add_toolbar()  # comment this out for no toolbar
         self.add_menu()
-
 
         TIMER_ID = 1
 
@@ -217,8 +213,6 @@ class CanvasFrame(wx.Frame):
         self.paused = True
         #self.OnPause()
 
-
-        
         #fix this
     def update_status(self, message):
         self.SetStatusText(message)
@@ -229,6 +223,7 @@ class CanvasFrame(wx.Frame):
    
     def on_click(self, event):
         print("Button clicked")
+        print(event.xdata, event.ydata)
 
     def add_menu(self):
         menubar = wx.MenuBar() 
