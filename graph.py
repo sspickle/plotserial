@@ -302,8 +302,9 @@ class CanvasFrame(wx.Frame):
             self.data = {}
             self.lock.release()
         if id == wx.ID_EXIT:
+            print("closing....")
             self.Close()
-        
+
     def add_toolbar(self):
         self.toolbar = NavigationToolbar(self.canvas)
         self.toolbar.Realize()
@@ -471,6 +472,8 @@ class CanvasFrame(wx.Frame):
             #self.axes.set_ylim([250,600])
             self.axes.grid()
             #self.axes.set_title(r"Pressure Graph")
+            self.axes.set_xlabel("time (s)")
+            self.axes.set_ylabel("Force (Lb)")
             self.lock.release()
             #self.t1.Disable()
             self.stop_plot()
