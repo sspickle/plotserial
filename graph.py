@@ -152,8 +152,8 @@ class CanvasFrame(wx.Frame):
         self.figure = Figure()
         self.axes = self.figure.add_subplot()
         self.canvas = FigureCanvas(self, -1, self.figure)
-        self.canvas.callbacks.connect('button_press_event', self.on_click)
-       	
+        self.canvas.callbacks.connect('button_release_event', self.on_button_release)
+
         self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
         self.SetSizer(self.sizer)
         self.Fit()
@@ -221,9 +221,13 @@ class CanvasFrame(wx.Frame):
         self.update_status("collecting data")
         self.mon.openport(portname)
    
-    def on_click(self, event):
-        print("Button clicked")
-        print(event.xdata, event.ydata)
+    def on_button_release(self, event):
+        t = np.array(self.data.get('times',[]))
+        v = np.array(self.data.get('values',[]))
+        xlim = self.axes.get_xlim()
+        ylim = self.axes.get_ylim()
+        inside = (t < xlim[1]) & (t > xlim[0])
+        self.update_status(f"max: {min(np.max(v[inside]),ylim[1]):0.3f}")
 
     def add_menu(self):
         menubar = wx.MenuBar() 
