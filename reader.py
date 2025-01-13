@@ -51,6 +51,7 @@ class ReaderThread (Thread):
         self.port = None 
         self.portLock = RLock()
         self.paused = False
+        self.closedfinal = False
 
     def resetStartTime(self):
         self.portLock.acquire()
@@ -64,7 +65,7 @@ class ReaderThread (Thread):
                  break
 
     def run(self):
-        while 1:
+        while not self.closedfinal:
             s = ''
             self.portLock.acquire()
             if self.port:
@@ -88,11 +89,13 @@ class ReaderThread (Thread):
             self.portLock.release()
             time.sleep(DELAY_TIME)
 
-    def closeifopen(self):
+    def closeifopen(self, closefinal=False):
         if self.port != None:
             self.port.close()
             self.port = None
             print("port closed")
+            if closefinal:
+                self.closedfinal = True
 
     def openport(self, portname):
         self.portLock.acquire()
@@ -199,8 +202,10 @@ class MonitorThread(Thread):
     def resetTime(self):
         if self.reader:
             self.reader.resetStartTime()
-    
-        
+
+    def closeport(self):
+        if self.reader:
+            self.reader.closeifopen(closefinal=True)
 
 def monitorPort(test=0):
     
