@@ -80,7 +80,7 @@ class ReaderThread (Thread):
                 try:
                     val,num = eval(s)
                     t = time.time()
-                    self.recvQueue.put(((val/num*4.0/21967.123076)/0.026652744195345,t))
+                    self.recvQueue.put(((val/num*4.0/10965.653846)/0.026652744195345,t))
                 except (ValueError, SyntaxError, NameError) as e:
                     print ("Ack. conversion error:" + str(s), "keep trying...")
             else:
