@@ -88,6 +88,7 @@ class ReaderThread (Thread):
                 time.sleep(DELAY_TIME)
             self.portLock.release()
             time.sleep(DELAY_TIME)
+        print("Reader thread exiting...")
 
     def closeifopen(self, closefinal=False, aqcuirelock=False):
         if self.port != None:
