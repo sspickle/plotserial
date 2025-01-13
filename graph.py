@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import matplotlib
-from zmq import NULL
+#from zmq import NULL
 matplotlib.use("WxAgg")
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
