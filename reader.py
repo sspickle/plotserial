@@ -128,6 +128,11 @@ class SenderThread(Thread):
         self.setDaemon(1)
         self.queue = ThreadQueue()
         self.callback = callback
+        self.closedfinal = False
+
+
+    def close(self):
+        self.closedfinal = True
 
     def put(self, item):
         self.queue.put(item)
@@ -139,7 +144,7 @@ class SenderThread(Thread):
                  break
         
     def run(self):
-        while 1:
+        while not self.closedfinal:
             time.sleep(DELAY_TIME)
             items = []
 
@@ -153,6 +158,7 @@ class SenderThread(Thread):
             if items:
                 if self.callback:
                     self.callback( items )
+        print("sender thread exiting...")
 
 class MonitorThread(Thread):
 
@@ -208,9 +214,11 @@ class MonitorThread(Thread):
         if self.reader:
             self.reader.resetStartTime()
 
-    def closeport(self):
+    def closeports(self):
         if self.reader:
             self.reader.closeifopen(closefinal=True, aqcuirelock=True)
+        if self.sender:
+            self.sender.close()
 
 def monitorPort(test=0):
     
