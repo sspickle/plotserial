@@ -109,6 +109,7 @@ class ReaderThread (Thread):
         self.port = serial.Serial(portname, baudrate=57600)
         self.resetStartTime()
         self.portLock.release()
+        print("port opened")
 
     def get(self):
         return self.recvQueue.get()

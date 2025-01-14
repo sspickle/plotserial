@@ -309,6 +309,8 @@ class CanvasFrame(wx.Frame):
             print("closing....")
             if self.mon:
                 self.mon.closeports()
+                del self.mon
+                self.mon = None
             self.Close()
 
     def add_toolbar(self):
