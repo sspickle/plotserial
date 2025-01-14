@@ -80,7 +80,7 @@ class CountdownPanel(wx.Panel):
 
 def GetGitTag():
     # tag =  subprocess.check_output(['git', 'describe', '--tags'])
-    tag = '1.1.2'
+    tag = '1.1.3 2024/01/13'
     print(tag)
     return tag
 
