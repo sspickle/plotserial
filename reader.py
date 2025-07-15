@@ -79,9 +79,9 @@ class ReaderThread (Thread):
                     print("Ack decode error:", inval)
 
                 try:
-                    val,num = eval(s)
+                    val = eval(s)
                     t = time.time()
-                    self.recvQueue.put(((val/num*4.0/10965.653846)/0.026652744195345,t))
+                    self.recvQueue.put((val,t))
                 except (ValueError, SyntaxError, NameError) as e:
                     print ("Ack. conversion error:" + str(s), "keep trying...")
             else:
@@ -106,7 +106,7 @@ class ReaderThread (Thread):
         self.portLock.acquire()
         self.closeifopen()
         print("in readerThread openport id", portname)
-        self.port = serial.Serial(portname, baudrate=57600)
+        self.port = serial.Serial(portname, baudrate=115200)
         self.resetStartTime()
         self.portLock.release()
         print("port opened")
@@ -119,9 +119,6 @@ class ReaderThread (Thread):
         Send typed message to port
         """
         self.port.write(msg.encode())
-
-
-        
 class SenderThread(Thread):
     
     def __init__(self, callback=None):

@@ -114,13 +114,12 @@ class CanvasFrame(wx.Frame):
     def __init__(self, port = 'COM3:'):
         super(CanvasFrame, self).__init__(None, -1, "Canvas Frame", size=(550, 350))
 
-
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         self.progressBar = CustomProgressBar(self, size=(250, 25))
-        self.hbox.Add(self.progressBar, 0, wx.ALL, 5)
+        hbox1.Add(self.progressBar, 0, wx.ALL, 5)
+        self.sizer.Add(hbox1, 0, wx.ALIGN_CENTER_HORIZONTAL)
 
         self.CreateStatusBar()
         self.SetStatusText("Please choose a port")
@@ -153,35 +152,18 @@ class CanvasFrame(wx.Frame):
         self.axes = self.figure.add_subplot()
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.canvas.callbacks.connect('button_release_event', self.on_button_release)
-
-        self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
-        self.SetSizer(self.sizer)
-        self.Fit()
-
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.EXPAND)
-        self.SetSizer(self.sizer)
-        self.Fit()
 
-        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        #lblList = ['Manual', 'Threshold', 'Timer'] 
-        #self.rbox = wx.RadioBox(self, label = 'Mode', pos = (0,0), choices = lblList, majorDimension = 3, style = wx.RA_SPECIFY_ROWS) 
-
-        #self.l1 = wx.StaticText(self, -1, " Input")
-        #self.t1 = wx.TextCtrl(self) 
-        
         self.clearButton = wx.Button(self, label="Restart")
         self.saveButton = wx.Button(self, label="Save Data")
         self.pauseButton = wx.Button(self, label="Start")
 
-        #self.hbox.Add(self.rbox, 10)
-        #self.hbox.Add(self.l1, 10)
-        #self.hbox.Add(self.t1, 30)
-
-        self.hbox.Add(self.clearButton, 20)
-        self.hbox.Add(self.saveButton, 20)
-        self.hbox.Add(self.pauseButton, 20)
+        hbox2.Add(self.clearButton, 1, wx.ALL, 5)
+        hbox2.Add(self.saveButton, 1, wx.ALL, 5)
+        hbox2.Add(self.pauseButton, 1, wx.ALL, 5)
+        self.sizer.Add(hbox2, 0, wx.EXPAND)
 
         self.pauseButton.Disable()
         self.saveButton.Disable()
@@ -189,31 +171,27 @@ class CanvasFrame(wx.Frame):
 
         self.axes.grid()
         self.axes.set_ylim([250,600])
-        self.sizer.Add(self.hbox, 0, wx.LEFT | wx.BOTTOM)
 
         self.clearButton.Bind(wx.EVT_BUTTON, self.OnClear)
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
 
-        self.add_toolbar()  # comment this out for no toolbar
+        self.add_toolbar()
         self.add_menu()
 
-        TIMER_ID = 1
+        self.SetSizerAndFit(self.sizer)
 
+        TIMER_ID = 1
         self.timer = wx.Timer(self, TIMER_ID)
         self.Bind(wx.EVT_TIMER, self.ontimer, self.timer)
         self.timer.Start(15)
 
         self.mon = MonitorThread(callback=self.dataCallback)
-        # self.mon.reader.paused = False
         self.lock.acquire()
         self.data = {}
         self.lock.release()
         self.mon.start()
         self.paused = True
-        #self.OnPause()
-
-        #fix this
     def update_status(self, message):
         self.SetStatusText(message)
 
