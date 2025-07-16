@@ -28,6 +28,9 @@ import wx
 import serial.tools.list_ports
 import subprocess
 
+config = wx.Config("MyAppName")
+lastPort = config.Read("LastPort")
+
 
 portInfo = {} #keep track of ports
 DELAY_TIME = .01
@@ -108,8 +111,6 @@ class CustomProgressBar(wx.Panel):
         dc.SetBrush(wx.Brush(self.progress_color))
         dc.DrawRectangle(0, 0, progress_width, height)
 
-
-
 class CanvasFrame(wx.Frame):
     def __init__(self, port = 'COM3:'):
         super(CanvasFrame, self).__init__(None, -1, "Canvas Frame", size=(550, 350))
@@ -132,7 +133,7 @@ class CanvasFrame(wx.Frame):
         self.timerToggle = False
         self.thresholdToggle = False
         self.time = 0
-
+        self.portOpened = False
         self.startTime = 0
         self.displayTime = 0
         self.elapsedTime = 0.0
@@ -170,7 +171,7 @@ class CanvasFrame(wx.Frame):
         self.clearButton.Disable()
 
         self.axes.grid()
-        self.axes.set_ylim([250,600])
+        #self.axes.set_ylim([250,600])
 
         self.clearButton.Bind(wx.EVT_BUTTON, self.OnClear)
         self.saveButton.Bind(wx.EVT_BUTTON, self.OnSave)
@@ -178,6 +179,8 @@ class CanvasFrame(wx.Frame):
 
         self.add_toolbar()
         self.add_menu()
+        if self.portOpened:
+            self.SetStatusText("Port opened: " + lastPort)
 
         self.SetSizerAndFit(self.sizer)
 
@@ -220,8 +223,14 @@ class CanvasFrame(wx.Frame):
             portInfo[menuID] = port.device
            
             fileMenu.AppendItem(wx.MenuItem(fileMenu, menuID,text = port.name)) 
-        fileMenu.AppendSeparator() 
+
+            if port == lastPort:
+                self.open_port(port.device)
+                self.pauseButton.Enable()
+                self.saveButton.Enable()
+                self.clearButton.Enable()
         
+        fileMenu.AppendSeparator() 
      
         quit = wx.MenuItem(fileMenu, wx.ID_EXIT, '&Quit') 
       
@@ -280,6 +289,9 @@ class CanvasFrame(wx.Frame):
                 self.open_port(portInfo[id])
             elif platform == "win32":
                 self.open_port(portInfo[id]+":")
+            config.Write("LastPort", portInfo[id])
+            config.Flush()
+            print("Port set to", portInfo[id])
             self.lock.acquire()
             self.data = {}
             self.lock.release()

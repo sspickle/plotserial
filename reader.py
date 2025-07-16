@@ -70,10 +70,10 @@ class ReaderThread (Thread):
             self.portLock.acquire()
             if self.port:
                 try:
-                    #print('reading input...')
+                    print('reading input...')
                     inval = self.port.readline()
                     s = inval.decode().strip()
-                    #print("got input:", s)
+                    print("got input:", s)
                     
                 except UnicodeDecodeError:
                     print("Ack decode error:", inval)
@@ -106,7 +106,7 @@ class ReaderThread (Thread):
         self.portLock.acquire()
         self.closeifopen()
         print("in readerThread openport id", portname)
-        self.port = serial.Serial(portname, baudrate=115200)
+        self.port = serial.Serial(portname, baudrate=9600)
         self.resetStartTime()
         self.portLock.release()
         print("port opened")
