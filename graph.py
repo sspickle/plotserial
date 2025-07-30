@@ -30,7 +30,7 @@ import subprocess
 
 config = wx.Config("MyAppName")
 lastPort = config.Read("LastPort")
-
+print("Last Port:", lastPort)
 
 portInfo = {} #keep track of ports
 DELAY_TIME = .01
@@ -178,10 +178,6 @@ class CanvasFrame(wx.Frame):
         self.pauseButton.Bind(wx.EVT_BUTTON, self.OnPause)
 
         self.add_toolbar()
-        self.add_menu()
-        if self.portOpened:
-            self.SetStatusText("Port opened: " + lastPort)
-
         self.SetSizerAndFit(self.sizer)
 
         TIMER_ID = 1
@@ -195,6 +191,14 @@ class CanvasFrame(wx.Frame):
         self.lock.release()
         self.mon.start()
         self.paused = True
+
+        self.add_menu()
+        self.checkForLastPort()
+
+        if self.portOpened:
+            self.SetStatusText("Port opened: " + lastPort)
+
+
     def update_status(self, message):
         self.SetStatusText(message)
 
@@ -203,12 +207,33 @@ class CanvasFrame(wx.Frame):
         self.mon.openport(portname)
    
     def on_button_release(self, event):
-        t = np.array(self.data.get('times',[]))
-        v = np.array(self.data.get('values',[]))
+        t = np.array(self.data.get('time',[]))
+        v = np.array(self.data.get('force',[]))
         xlim = self.axes.get_xlim()
         ylim = self.axes.get_ylim()
         inside = (t < xlim[1]) & (t > xlim[0])
         self.update_status(f"max: {min(np.max(v[inside]),ylim[1]):0.3f}")
+
+    def checkForLastPort(self):
+        if lastPort:
+            ports = serial.tools.list_ports.comports()
+            for port in ports:
+                if port.device == lastPort:
+                    print("Found last port:", lastPort)
+                    if platform == "darwin":
+                        self.open_port(lastPort)
+                    elif platform == "win32":
+                        self.open_port(lastPort + ":")
+                    self.portOpened = True
+                    self.pauseButton.Enable()
+                    self.saveButton.Enable()
+                    self.clearButton.Enable()
+                    self.SetStatusText("Port opened: " + lastPort)
+                    self.lock.acquire()
+                    self.data = {}
+                    self.lock.release()
+                    return
+
 
     def add_menu(self):
         menubar = wx.MenuBar() 
@@ -222,13 +247,7 @@ class CanvasFrame(wx.Frame):
             print(menuID)
             portInfo[menuID] = port.device
            
-            fileMenu.AppendItem(wx.MenuItem(fileMenu, menuID,text = port.name)) 
-
-            if port == lastPort:
-                self.open_port(port.device)
-                self.pauseButton.Enable()
-                self.saveButton.Enable()
-                self.clearButton.Enable()
+            fileMenu.Append(wx.MenuItem(fileMenu, menuID,text = port.name)) 
         
         fileMenu.AppendSeparator() 
      
@@ -447,6 +466,7 @@ class CanvasFrame(wx.Frame):
                 self.OnPause(evt)
 
     def dataCallback(self, items):
+        #print("dataCallback", items, self.paused)
         self.lock.acquire()
         for val,t in items:
             if self.paused:
@@ -454,8 +474,8 @@ class CanvasFrame(wx.Frame):
                 #print("in dataCallBack Paused")
             else:
                 self.displayTime = t - self.startTime
-                self.data['values'] = self.data.get('values',[])+[val]
-                self.data['times'] = self.data.get('times',[])+[self.displayTime] 
+                self.data['time'] = self.data.get('time',[])+[self.displayTime] 
+                self.data['force'] = self.data.get('force',[])+[val]
                 if not self.printed:
                     #print(t)  
                     self.printed = True   
@@ -463,10 +483,10 @@ class CanvasFrame(wx.Frame):
         self.thresholdCalculation(items)
 
     def plot_data(self):
-        if not self.paused and self.data.get('values',[]):    
+        if not self.paused and self.data.get('force',[]):    
             self.lock.acquire()
             self.axes.clear()
-            self.axes.plot(self.data['times'], self.data['values'],label="Force")
+            self.axes.plot(self.data['time'], self.data['force'],label="Force")
             #self.axes.set_ylim([250,600])
             self.axes.grid()
             #self.axes.set_title(r"Pressure Graph")
@@ -498,19 +518,8 @@ class CanvasFrame(wx.Frame):
                 
             if self.progressBar.progress >= 100:
                 self.paused = True
-
-        
-        #if self.paused:  
-        #    self.t1.Enable()
-            
-        #if self.paused:
-        #    if self.progressBar.progress >= 100:
-        #        self.progressBar.Show()
-        #        self.progressBar.SetColor(wx.Colour(0, 0, 255))
-
-        # if self.progressBar.progress >= 100:
-        #     self.progressBar.SetColor(wx.Colour(0, 0, 255))
     
+       
     def stop_plot(self):
         #print(int(time.time()))
         if((self.mode == self.timerMode) and int(time.time() - self.startTime) >= self.value):

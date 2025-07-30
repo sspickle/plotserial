@@ -44,7 +44,6 @@ class ReaderThread (Thread):
 
     def __init__(self):
         Thread.__init__(self, name="Reader")
-        self.setDaemon(1)
         self.recvQueue = ThreadQueue()
         self.foundLabels = False
         self.gotStart = False
@@ -70,18 +69,20 @@ class ReaderThread (Thread):
             self.portLock.acquire()
             if self.port:
                 try:
-                    print('reading input...')
+                    #print('reading input...')
                     inval = self.port.readline()
                     s = inval.decode().strip()
-                    print("got input:", s)
+                    #print("got input:", s)
                     
                 except UnicodeDecodeError:
                     print("Ack decode error:", inval)
 
                 try:
                     val = eval(s)
+                    FN = (val - 0.03526709)/0.00210512 - 19.196
+                    FLb = FN * 0.224809 # convert to Lb
                     t = time.time()
-                    self.recvQueue.put((val,t))
+                    self.recvQueue.put((FLb,t))
                 except (ValueError, SyntaxError, NameError) as e:
                     print ("Ack. conversion error:" + str(s), "keep trying...")
             else:
@@ -106,7 +107,7 @@ class ReaderThread (Thread):
         self.portLock.acquire()
         self.closeifopen()
         print("in readerThread openport id", portname)
-        self.port = serial.Serial(portname, baudrate=9600)
+        self.port = serial.Serial(portname, baudrate=115200)
         self.resetStartTime()
         self.portLock.release()
         print("port opened")
@@ -119,11 +120,11 @@ class ReaderThread (Thread):
         Send typed message to port
         """
         self.port.write(msg.encode())
+
 class SenderThread(Thread):
     
     def __init__(self, callback=None):
         Thread.__init__(self, name="Sender")
-        self.setDaemon(1)
         self.queue = ThreadQueue()
         self.callback = callback
         self.closedfinal = False
@@ -174,7 +175,9 @@ class MonitorThread(Thread):
     def run(self):
         
         self.reader = ReaderThread()
+        self.reader.daemon = True
         self.sender = SenderThread(callback=self.callback)
+        self.sender.daemon = True
         
         # if self.port == True:
         #     self.port.close()
@@ -220,7 +223,7 @@ class MonitorThread(Thread):
 
 def monitorPort(test=0):
     
-    monitor = MonitorThread(callback = testCallback, fr=0)
+    monitor = MonitorThread(callback = testCallback, fr=0 , port='/dev/cu.usbmodem21303')
     monitor.start()
     
     while 1:
