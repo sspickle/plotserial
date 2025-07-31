@@ -7,3 +7,5 @@ data.py
 /build
 /dist
 .DS_*
+graph.spec
+
