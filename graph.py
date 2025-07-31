@@ -101,7 +101,7 @@ class CountdownPanel(wx.Panel):
 
 def GetGitTag():
     # tag =  subprocess.check_output(['git', 'describe', '--tags'])
-    tag = '1.1.3 2024/01/13'
+    tag = '2025/07/30'
     print(tag)
     return tag
 
@@ -397,14 +397,6 @@ class CanvasFrame(wx.Frame):
                 self.OnClear(evt)   
             self.pauseButton.SetLabel("Stop") 
             self.update_status("collecting data...")
-            
-    def OnTogglePlotType(self, evt):
-        if self.plotType == ICVSIB:
-            self.plotType = ICVSVC
-            self.plotTypeButton.SetLabel(ICVSIB_Label)
-        else:
-            self.plotType = ICVSIB
-            self.plotTypeButton.SetLabel(ICVSVC_Label)
         
     def OnSave(self, evt):
         self.lock.acquire()
