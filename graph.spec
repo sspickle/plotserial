@@ -5,7 +5,7 @@ a = Analysis(
     ['graph.py'],
     pathex=[],
     binaries=[],
-    datas=[('image.png', '.')],
+    datas=[('./image.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

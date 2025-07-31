@@ -28,6 +28,24 @@ import wx
 import serial.tools.list_ports
 import subprocess
 
+import os
+import sys
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    try:
+        base_path = sys._MEIPASS
+        print("Base path:", base_path)
+    except AttributeError:
+        print("no _MEIPASS defined, using current directory")
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+# Example usage:
+image_path = get_resource_path("image.png")
+# Use image_path with your image handling library (e.g., Pillow, PyQt)
+
+
 config = wx.Config("MyAppName")
 lastPort = config.Read("LastPort")
 print("Last Port:", lastPort)
@@ -270,7 +288,7 @@ class CanvasFrame(wx.Frame):
         aboutMenu.Append(infoTxt)
         aboutMenu.Append(namesTxt)
 
-        image = wx.Bitmap("image.png", wx.BITMAP_TYPE_PNG)
+        image = wx.Bitmap(image_path, wx.BITMAP_TYPE_PNG)
 
         # aboutMenu.Append(wx.ID_ANY, "Image Button", bitmap=image)
 
