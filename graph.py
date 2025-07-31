@@ -28,6 +28,22 @@ import wx
 import serial.tools.list_ports
 import subprocess
 
+import os
+import sys
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller."""
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+# Example usage:
+image_path = get_resource_path("your_image.png")
+# Use image_path with your image handling library (e.g., Pillow, PyQt)
+
+
 config = wx.Config("MyAppName")
 lastPort = config.Read("LastPort")
 print("Last Port:", lastPort)
