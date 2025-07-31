@@ -271,7 +271,7 @@ class CanvasFrame(wx.Frame):
      
         quit = wx.MenuItem(fileMenu, wx.ID_EXIT, '&Quit') 
       
-        fileMenu.AppendItem(quit) 
+        fileMenu.Append(quit) 
         menubar.Append(fileMenu, '&Change Port') 
 
         version = GetGitTag()
